@@ -14,8 +14,8 @@ public class Scene {
 	private static List<Triangle> triangles = new ArrayList<Triangle>();
 	private Vector camera = new Vector();
 
-	private double z_near = 5;
-	private double fov_angle = 60;
+	private double z_near;
+	private double fov_angle;
 
 	public Scene() {
 		camera.x = 0;
