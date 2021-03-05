@@ -33,7 +33,7 @@ public class Scene {
 		for (int i = 0; i < triangles.size(); i++) {
 			Triangle temp = triangles.get(i);
 			Triangle new_persp = new Triangle();
-			if (!isInFOV(temp)) {
+			if (triangleIsClipped(temp)) {
 				// We need clipping
 				Point[] points=clipTriangle(temp);
 				int[] x_coord=new int[points.length];
@@ -365,6 +365,9 @@ public class Scene {
 
 	private boolean isInFOV(Triangle t) {
 		return isInFOV(t.v[0]) && isInFOV(t.v[1]) && isInFOV(t.v[2]);
+	}
+	private boolean triangleIsClipped(Triangle t) {
+		return isInBack(t.v[0]) || isInBack(t.v[1]) || isInBack(t.v[2]);
 	}
 
 	// Check if point is hidden because of the near plane
