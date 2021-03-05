@@ -15,6 +15,6 @@ The format is at it follows:
   - Any line starting with `/` is ignored
   - Every valid line describes a triangle followed optionally by the color
   - Every line consists of three `blocks` separated by empty spaces and representing individual point coordinates for the corner of triangle
-    - `x1,y1,z1` <space> `x2,y2,z2` <space> `x3,y3,z3` <space> <color> 
+    - `x1,y1,z1` \<space\> `x2,y2,z2` \<space\> `x3,y3,z3` \<space\> \<color\> 
   - Color format is in RGB values separated by comma:
     - `r,g,b`   
