@@ -2,6 +2,12 @@
 This is a very small engine written in plain java which renders 3D scenes.
 The math behind is very simple - without any matrix transformations. Just trigonometric solutions
 
+# Features
+  - Perspective projection
+  - FOV
+  - Rotation/Translation for the entire scene/camera
+  - Triangle/Line Clipping
+ 
 # Objects file format
 The objects to be rendered should be stored in `obj.txt` file.
 The format is at it follows:
