@@ -70,45 +70,114 @@ public class Scene {
 
 	public void read3DObject(String path) {
 		File file = new File(path);
+		
+		if(path.contains(".txt")) {
+			// Custom format
 
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(file));
+				String st;
+				while ((st = br.readLine()) != null) {
+					String[] pos = st.split(" ");
+					Triangle temp = new Triangle();
+
+					if (st.startsWith("/") || pos.length<3)
+						continue;
+
+					if (pos.length >= 3) {
+						String[] points = pos[0].split(",");
+
+						temp.v[0].x = Double.parseDouble(points[0]);
+						temp.v[0].y = Double.parseDouble(points[1]);
+						temp.v[0].z = Double.parseDouble(points[2]);
+
+						points = pos[1].split(",");
+						temp.v[1].x = Double.parseDouble(points[0]);
+						temp.v[1].y = Double.parseDouble(points[1]);
+						temp.v[1].z = Double.parseDouble(points[2]);
+
+						points = pos[2].split(",");
+						temp.v[2].x = Double.parseDouble(points[0]);
+						temp.v[2].y = Double.parseDouble(points[1]);
+						temp.v[2].z = Double.parseDouble(points[2]);
+					}
+					if (pos.length > 3) {
+						// A color is defined
+						String[] colors = pos[3].split(",");
+
+						int r = Integer.parseInt(colors[0]);
+						int g = Integer.parseInt(colors[1]);
+						int b = Integer.parseInt(colors[2]);
+
+						temp.color = new Color(r, g, b);
+					}
+					triangles.add(temp);
+				}
+
+			} catch (Exception e) {
+				System.out.println("Can't read file");
+				e.printStackTrace();
+			}
+			
+			return;
+		}
+		
+
+		// Object format
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			String st;
+			List<Point> vertexes=new ArrayList<Point>();
+			
 			while ((st = br.readLine()) != null) {
+				Triangle face=new Triangle();
+				int mode=0;	// 0 - vertex mode; 1- triangle mode
 				String[] pos = st.split(" ");
-				Triangle temp = new Triangle();
 
-				if (st.startsWith("/") || pos.length<3)
+				if (st.startsWith("/") || pos.length<4)
 					continue;
-
-				if (pos.length >= 3) {
-					String[] points = pos[0].split(",");
-
-					temp.v[0].x = Double.parseDouble(points[0]);
-					temp.v[0].y = Double.parseDouble(points[1]);
-					temp.v[0].z = Double.parseDouble(points[2]);
-
-					points = pos[1].split(",");
-					temp.v[1].x = Double.parseDouble(points[0]);
-					temp.v[1].y = Double.parseDouble(points[1]);
-					temp.v[1].z = Double.parseDouble(points[2]);
-
-					points = pos[2].split(",");
-					temp.v[2].x = Double.parseDouble(points[0]);
-					temp.v[2].y = Double.parseDouble(points[1]);
-					temp.v[2].z = Double.parseDouble(points[2]);
+				
+				// Uknown mode
+				if(!pos[0].equals("v") && !pos[0].equals("f")) continue;
+				
+				mode=pos[0].equals("v")?0:1;
+				
+				if (pos.length >= 4) {
+					if(mode==0) {
+						// A point is being built
+						Point temp=new Point();
+						
+						temp.x = Double.parseDouble(pos[1]);
+						temp.y = Double.parseDouble(pos[2]);
+						temp.z = Double.parseDouble(pos[3]);
+						
+						vertexes.add(temp);
+						continue;
+					}else {
+						// A triangle is being built
+						
+						int vertex1_index=Integer.parseInt(pos[1])-1;
+						int vertex2_index=Integer.parseInt(pos[2])-1;
+						int vertex3_index=Integer.parseInt(pos[3])-1;
+						
+						face.v[0]=(Point) vertexes.get(vertex1_index).clone();
+						face.v[1]=(Point) vertexes.get(vertex2_index).clone();
+						face.v[2]=(Point) vertexes.get(vertex3_index).clone();
+						
+					}
 				}
-				if (pos.length > 3) {
+				if (pos.length ==5 && mode==1) {
 					// A color is defined
-					String[] colors = pos[3].split(",");
+					String[] colors = pos[4].split(",");
 
 					int r = Integer.parseInt(colors[0]);
 					int g = Integer.parseInt(colors[1]);
 					int b = Integer.parseInt(colors[2]);
 
-					temp.color = new Color(r, g, b);
+					face.color = new Color(r, g, b);
 				}
-				triangles.add(temp);
+				
+				triangles.add(face);
 			}
 
 		} catch (Exception e) {
@@ -116,7 +185,8 @@ public class Scene {
 			e.printStackTrace();
 		}
 	}
-
+	
+	
 	// Clips a triangle against the near plane
 	// Requires world coordinates
 	// The coordinates relative to the camera aka transformed

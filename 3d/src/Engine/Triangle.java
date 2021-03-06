@@ -10,6 +10,9 @@ public class Triangle implements Cloneable,Comparable<Triangle>{
 		v[0]=new Point();
 		v[1]=new Point();
 		v[2]=new Point();
+		
+		color=new Color((int)(Math.random()*255),(int)(Math.random()*255),(int)(Math.random()*255));
+		
 	}
 	
 	public String toString() {
@@ -28,6 +31,6 @@ public class Triangle implements Cloneable,Comparable<Triangle>{
 
 	@Override
 	public int compareTo(Triangle o) {
-		return (v[0].z+v[1].z+v[2].z)>(o.v[0].z+o.v[1].z+o.v[2].z)?-1:1;
+		return -Double.compare(v[0].z+v[1].z+v[2].z, o.v[0].z+o.v[1].z+o.v[2].z);
 	}
 }
