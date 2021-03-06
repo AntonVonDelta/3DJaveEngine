@@ -7,7 +7,7 @@ The math behind is very simple - without any matrix transformations. Just trigon
   - FOV
   - Rotation/Translation for the entire scene/camera
   - Triangle/Line Clipping
- 
+  - **New** 3D Depth algorithm - Painter's algo
 # Objects file format
 The objects to be rendered should be stored in `obj.txt` file.
 The format is at it follows:
@@ -18,3 +18,6 @@ The format is at it follows:
     - `x1,y1,z1` \<space\> `x2,y2,z2` \<space\> `x3,y3,z3` \<space\> \<color\> 
   - Color format is in RGB values separated by comma:
     - `r,g,b`   
+# Rendering Examples
+![image](https://user-images.githubusercontent.com/25268629/110189181-f1789280-7e26-11eb-8409-ac71e8bd2d31.png)
+![image](https://user-images.githubusercontent.com/25268629/110189263-2edd2000-7e27-11eb-9915-b356c18db927.png)
