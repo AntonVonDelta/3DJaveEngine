@@ -2,9 +2,9 @@ package Engine;
 
 import java.awt.Color;
 
-public class Triangle implements Cloneable{
+public class Triangle implements Cloneable,Comparable<Triangle>{
 	public Point v[]=new Point[3];
-	public Color color=Color.GRAY;
+	public Color color=Color.DARK_GRAY;
 	
 	public Triangle() {
 		v[0]=new Point();
@@ -24,5 +24,10 @@ public class Triangle implements Cloneable{
 		temp.color=color;
 		
 	    return temp; 
+	}
+
+	@Override
+	public int compareTo(Triangle o) {
+		return (v[0].z+v[1].z+v[2].z)>(o.v[0].z+o.v[1].z+o.v[2].z)?-1:1;
 	}
 }

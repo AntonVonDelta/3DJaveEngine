@@ -5,6 +5,7 @@ import javax.swing.JPanel;
 import Engine.Point;
 import Engine.Scene;
 import Engine.Triangle;
+import Engine.Vector;
 
 import java.awt.BorderLayout;
 import java.awt.Canvas;
@@ -33,19 +34,22 @@ public class Main {
 	public static int w=1000,h=500;
 	public static Panel panel;
 	public static Graphics graph;
+	public static Keyboard keyboard;
 	
 	public static boolean position_control=false;
 	public static double control_angle_x=0;
 	public static double control_angle_y=0;
-	public static double control_position_x=0;
-	public static double control_position_y=0;
-	public static double control_position_z=0;
+	public static double control_position_sideways=0;
+	public static double control_position_altitudine=0;
+	public static double control_position_backforth=0;
 	
 	public static Scene scene;
 	
 	public static void main( String args[]) throws Exception{
 		scene=new Scene();
 		panel=new Panel();
+		keyboard=new Keyboard();
+		
 		panel.setSize(w,h);
 		
 		window1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -60,7 +64,7 @@ public class Main {
         window1.setVisible(true);
         
         window1.addMouseListener(new Mouse());
-        window1.addKeyListener(new Keyboard());
+        window1.addKeyListener(keyboard);
         window1.addComponentListener(new Component());
         
 		graph=panel.getGraphics();
@@ -68,17 +72,33 @@ public class Main {
 		scene.setDimensions(w, h);
 		scene.read3DObject("obj.txt");
 		
-		while(true) {loop();Thread.sleep(20);}
+		while(true) {
+			keyboard.virtualHoldKey();
+			loop();
+			Thread.sleep(20);
+		}
 	}
 
 	
     public static void loop() {
-    	scene.rotateSceneYAxis(control_angle_y);
-    	scene.rotateSceneXAxis(control_angle_x);
+    	scene.rotateCameraYAxis(control_angle_y);
+    	scene.rotateCameraXAxis(control_angle_x);
     	
-    	scene.translateSceneXAxis(control_position_x);
-    	scene.translateSceneYAxis(control_position_y);
-    	scene.translateSceneZAxis(control_position_z);
+    	
+    	// Math for keeping the controls straight even after camera rotation
+    	Vector cam=scene.getCameraVec();
+    	
+    	double x_component=Math.cos(Math.toRadians(cam.yAngle+90))*control_position_backforth;
+    	double y_component=0;
+    	double z_component=Math.sin(Math.toRadians(cam.yAngle+90))*control_position_backforth;
+    	
+    	x_component+=Math.cos(Math.toRadians(cam.yAngle))*control_position_sideways;
+    	z_component+=Math.sin(Math.toRadians(cam.yAngle))*control_position_sideways;
+    	y_component=control_position_altitudine;
+    	
+    	scene.moveCameraXAxis(x_component);
+    	scene.moveCameraYAxis(y_component);
+    	scene.moveCameraZAxis(z_component);
     	panel.repaint();
     }
     
