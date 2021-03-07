@@ -12,6 +12,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class Scene {
+	private static boolean DEBUG=false;
+	private static Point DEBUG_POINT=new Point();
+	
 	private static int w, h;
 	private static List<Triangle> triangles = new ArrayList<Triangle>();
 	private Vector camera = new Vector();
@@ -35,7 +38,7 @@ public class Scene {
 		List<Triangle> depth_sorted = new ArrayList<>();
 
 		for (int i = 0; i < triangles.size(); i++) {
-			Triangle temp = triangles.get(i);
+			Triangle temp = triangles.get(i);			
 			Triangle[] clipped_results = clipTriangle(temp);
 
 			// The triangle is invisble
@@ -57,9 +60,37 @@ public class Scene {
 				new_persp.v[j] = projectCameraCoordinatesToScreen(temp.v[j]);
 			}
 
-			g.setColor(temp.color);
-			g.fillPolygon(new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
-					new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
+			
+			if(temp.highlight) {
+				g.setColor(Color.WHITE);			
+				g.fillPolygon(new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
+						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
+				
+				
+				g.setColor(Color.BLACK);
+				g.drawPolygon(new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
+						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
+			}else {
+				g.setColor(temp.color);			
+				g.fillPolygon(new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
+						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
+				
+			}
+			
+			if(DEBUG) {
+				// Project triangle center
+				Point projected_center=projectCameraCoordinatesToScreen(temp.getCenter());
+				g.setColor(Color.MAGENTA);
+				g.fillArc((int)(projected_center.x), (int)(projected_center.y), 10, 10, 0,360);
+			}
+			
+		}
+		
+		if(DEBUG) {
+			// Project debug point
+			Point projected_center=projectCameraCoordinatesToScreen(DEBUG_POINT);
+			g.setColor(Color.RED);
+			g.fillArc((int)(projected_center.x), (int)(projected_center.y), 10, 10, 0,360);
 		}
 	}
 
@@ -211,11 +242,9 @@ public class Scene {
 
 		// Two corners are visible
 		if (visible_points.size() == 2) {
-			Triangle temp1 = new Triangle();
-			Triangle temp2 = new Triangle();
-
-			temp1.color = triangle.color;
-			temp2.color = triangle.color;
+			// Clone in order to keep its properties
+			Triangle temp1 = (Triangle) triangle.clone();
+			Triangle temp2 = (Triangle) triangle.clone();
 
 			Point intersect1 = clipLine(visible_points.get(0), hidden_points.get(0));
 			Point intersect2 = clipLine(visible_points.get(1), hidden_points.get(0));
@@ -231,9 +260,10 @@ public class Scene {
 			return new Triangle[] { temp1, temp2 };
 		}
 
-		// Just one corner is visible
-		Triangle temp1 = new Triangle();
-		temp1.color = triangle.color;
+		//// Just one corner is visible
+		
+		// Clone in order to keep its properties
+		Triangle temp1 = (Triangle) triangle.clone();
 
 		Point intersect1 = clipLine(visible_points.get(0), hidden_points.get(0));
 		Point intersect2 = clipLine(visible_points.get(0), hidden_points.get(1));
@@ -327,6 +357,55 @@ public class Scene {
 		return temp.a;
 	}
 
+	
+	
+	
+	// Highlights clicked triangle
+	// visible_triangle selects the triangle that is actually drawn on screen (which might be incorrect based on the Z depth)
+	//	- set this to false to select the true z-visible triangle
+	public void highlighTriangle(int x,int y,boolean visible_triangle) {
+		// Calculate the virtual points corresponding to the screen position
+		// This is calculated on the surface of the near plane
+		double virtual_x=((double)x-w/2)/(w/2);
+		double virtual_y=-((double)y-h/2)/(w/2);	// We need negative here because on screen the points are flipped on y axis
+		
+		// The line origin is the "eye" aka position 0,0,0
+		Point line_origin=new Point();
+		line_origin.x=0;
+		line_origin.y=0;
+		line_origin.z=0;
+		
+		// Line direction vector
+		Vector line_direction=new Vector();
+		line_direction.x=virtual_x;
+		line_direction.y=virtual_y;
+		line_direction.z=z_near;	// This point is on the surface of the near plane
+		line_direction=line_direction.normalize();
+		
+		Triangle closest_triangle=null;
+		Triangle original_triangle=null;
+		for(Triangle triangle:triangles) {
+			Triangle temp=applyCameraTransformation(triangle);
+			if(isInBack(temp)) continue;
+			
+			Vector triangle_normal=temp.getNormal();
+			Point intersection=Vector.intersectPlane(triangle_normal,line_direction, temp.v[0], line_origin);
+			
+			if(intersection==null || !temp.isPointInside(intersection)) continue;
+			if(closest_triangle==null || temp.compareTo(closest_triangle)>0) {
+				closest_triangle=temp;
+				original_triangle=triangle;
+				DEBUG_POINT=intersection;
+			}
+		}
+		
+		if(original_triangle!=null) original_triangle.highlight=!original_triangle.highlight;
+	}
+	
+	
+	
+	
+	
 	// Adds a vector of the specified length and direction to the camera
 	public void moveCameraXAxis(double amount) {
 		camera.x += amount;
@@ -343,11 +422,9 @@ public class Scene {
 	public void rotateCameraXAxis(double amount) {
 		camera.xAngle=amount;
 	}
-
 	public void rotateCameraYAxis(double amount) {
 		camera.yAngle=amount;
 	}
-
 	public void rotateCameraZAxis(double amount) {
 		camera.zAngle=amount;
 	}
@@ -585,11 +662,10 @@ public class Scene {
 	// Apllies the camera rotation and translation to the object given in world
 	// coordinates
 	private Triangle applyCameraTransformation(Triangle t) {
-		Triangle translated = new Triangle();
+		Triangle translated =(Triangle) t.clone();
 		translated.v[0] = applyCameraTransformation(t.v[0]);
 		translated.v[1] = applyCameraTransformation(t.v[1]);
 		translated.v[2] = applyCameraTransformation(t.v[2]);
-		translated.color = t.color;
 
 		return translated;
 	}
