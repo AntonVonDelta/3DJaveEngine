@@ -8,7 +8,7 @@ public class Mouse implements MouseListener{
 		// TODO Auto-generated method stub
 		if(arg0.getButton()==MouseEvent.BUTTON3) {
 			//Right click here
-			Main.scene.highlighTriangle(arg0.getX()-13, arg0.getY()-35, false);
+			Main.scene.highlighTriangle(arg0.getX()-10, arg0.getY()-30, true);
 		}else {
 			//Left click
 			if(arg0.getClickCount()==2) {

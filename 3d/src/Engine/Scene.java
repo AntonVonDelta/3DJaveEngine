@@ -9,10 +9,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
+
+import Structures.Graph;
+import Structures.Pair;
 
 public class Scene {
-	private static boolean DEBUG=false;
+	private static boolean DEBUG=true;
 	private static Point DEBUG_POINT=new Point();
 	
 	private static int w, h;
@@ -52,7 +58,20 @@ public class Scene {
 
 		// Z Sorting for the depth
 		Collections.sort(depth_sorted);
+		//depth_sorted=orderByZDepth(depth_sorted)
+		try{
+			int a=depth_sorted.get(2).compareTo(depth_sorted.get(0));
+			int b=depth_sorted.get(1).compareTo(depth_sorted.get(7));
+			int c=depth_sorted.get(3).compareTo(depth_sorted.get(7));
+			
+			int r=depth_sorted.get(6).compareTo(depth_sorted.get(7));
+			
+			int test=0;
+		}catch(Exception ex) {
+			
+		}
 
+		
 		// Draw the triangles
 		for (Triangle temp : depth_sorted) {
 			Triangle new_persp = new Triangle();
@@ -70,6 +89,8 @@ public class Scene {
 				g.setColor(Color.BLACK);
 				g.drawPolygon(new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
 						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
+				
+				//System.out.println(temp.toString());
 			}else {
 				g.setColor(temp.color);			
 				g.fillPolygon(new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
@@ -132,7 +153,7 @@ public class Scene {
 						temp.v[2].y = Double.parseDouble(points[1]);
 						temp.v[2].z = Double.parseDouble(points[2]);
 					}
-					if (pos.length > 3) {
+					if (pos.length >= 4) {
 						// A color is defined
 						String[] colors = pos[3].split(",");
 
@@ -142,6 +163,11 @@ public class Scene {
 
 						temp.color = new Color(r, g, b);
 					}
+					if (pos.length >= 4) {
+						// A debug name is provided
+						temp.debug_name=pos[4];
+					}
+					
 					triangles.add(temp);
 				}
 
@@ -357,8 +383,71 @@ public class Scene {
 		return temp.a;
 	}
 
-	
-	
+	// Orders the triangles using a ZBuffer improvement without however the rasterization and drawing
+	// This is an improved Painter's algorithm
+	// List must be camera relative triangles and clipped
+	private List<Triangle> orderByZDepth(List<Triangle> list) {
+		Graph<Triangle> dependency_graph=new Graph<Triangle>();
+		Set<Triangle> unprocessed_triangles=new HashSet<Triangle>();
+		
+//		for(Triangle temp:list) {
+//			unprocessed_triangles.add(temp);
+//		}
+		
+		for(int x=0;x<w;x+=20) {
+			for(int y=0;y<h;y+=20) {
+				PriorityQueue<Pair<Triangle> > heap = new PriorityQueue<Pair<Triangle>>();
+				double virtual_x=((double)x-w/2)/(w/2);
+				double virtual_y=-((double)y-h/2)/(w/2);	// We need negative here because on screen the points are flipped on y axis
+				
+				// The line origin is the "eye" aka position 0,0,0
+				Point line_origin=new Point();
+				line_origin.x=0;
+				line_origin.y=0;
+				line_origin.z=0;
+				
+				// Line direction vector
+				Vector line_direction=new Vector();
+				line_direction.x=virtual_x;
+				line_direction.y=virtual_y;
+				line_direction.z=z_near;	// This point is on the surface of the near plane
+				line_direction=line_direction.normalize();
+				
+				for(Triangle temp:list) {
+					if(isInBack(temp)) continue;
+					
+					Vector triangle_normal=temp.getNormal();
+					Point intersection=Vector.intersectPlane(triangle_normal,line_direction, temp.v[0], line_origin);
+					
+					if(intersection==null || !temp.isPointInside(intersection)) continue;
+					double dist=Math.sqrt(intersection.x*intersection.x+intersection.y*intersection.y+intersection.z*intersection.z);
+					
+					//unprocessed_triangles.remove(temp);
+					heap.add(new Pair<Triangle>(dist,temp));
+				}
+				
+				while(!heap.isEmpty()) {
+					Pair<Triangle> temp=heap.poll();
+					if(heap.size()==0) {
+						// No more triangles to read
+						dependency_graph.addVertex(temp.getValue());
+						break;
+					}
+					
+					Pair<Triangle> next_node=heap.poll();
+					
+					dependency_graph.addEdge(next_node.getValue(), temp.getValue());
+				}
+			}
+		}
+		
+//		for(Triangle temp:unprocessed_triangles) {
+//			dependency_graph.addVertex(temp);
+//		}
+		
+		// Sort the dependency graph topologically
+		return dependency_graph.topologicalSort();
+	}
 	
 	// Highlights clicked triangle
 	// visible_triangle selects the triangle that is actually drawn on screen (which might be incorrect based on the Z depth)
@@ -384,24 +473,50 @@ public class Scene {
 		
 		Triangle closest_triangle=null;
 		Triangle original_triangle=null;
-		for(Triangle triangle:triangles) {
-			Triangle temp=applyCameraTransformation(triangle);
-			if(isInBack(temp)) continue;
-			
-			Vector triangle_normal=temp.getNormal();
-			Point intersection=Vector.intersectPlane(triangle_normal,line_direction, temp.v[0], line_origin);
-			
-			if(intersection==null || !temp.isPointInside(intersection)) continue;
-			if(closest_triangle==null || temp.compareTo(closest_triangle)>0) {
-				closest_triangle=temp;
-				original_triangle=triangle;
-				DEBUG_POINT=intersection;
+		double closest_intersection_z=1000;
+
+		// We need to perform the detection on clipped triangles
+		// Just using camera-transformed triangles is not enough for when the user is inside an object or
+		//	clicking beyond a half-cut triangle
+		for (Triangle temp_triangle:triangles) {	
+			Triangle[] clipped_results = clipTriangle(temp_triangle);
+
+			// The triangle is invisble
+			if (clipped_results == null)
+				continue;
+
+			for (Triangle clipped_triangle : clipped_results) {
+				if(isInBack(clipped_triangle)) continue;
+				
+				Vector triangle_normal=clipped_triangle.getNormal();
+				Point intersection=Vector.intersectPlane(triangle_normal,line_direction, clipped_triangle.v[0], line_origin);
+				
+				if(intersection==null || !clipped_triangle.isPointInside(intersection)) continue;
+				
+				if(visible_triangle) {
+					if(closest_triangle==null || clipped_triangle.compareTo(closest_triangle)>0) {
+						closest_triangle=clipped_triangle;
+						original_triangle=temp_triangle; 	// Keep a reference to the original triangle
+						DEBUG_POINT=intersection;
+					}
+				}else {
+					// We actually need to sort based to distance TO THE EYE!
+					// A very subtle difference
+					double dist=Math.sqrt(intersection.x*intersection.x+intersection.y*intersection.y+intersection.z*intersection.z);
+					
+					if(original_triangle==null || dist<closest_intersection_z) {
+						closest_intersection_z=dist;
+						original_triangle=temp_triangle; 	// Keep a reference to the original triangle
+						DEBUG_POINT=intersection;
+					}
+				}
 			}
 		}
 		
-		if(original_triangle!=null) original_triangle.highlight=!original_triangle.highlight;
+		if(original_triangle!=null) {
+			original_triangle.highlight=!original_triangle.highlight;
+		}
 	}
-	
 	
 	
 	

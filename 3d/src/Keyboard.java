@@ -9,8 +9,8 @@ public class Keyboard implements KeyListener {
 	Map<Integer,Boolean> pressed_keys=new HashMap<Integer,Boolean>();
 	
 	public void virtualHoldKey() {
-		double turn_amount=10;
-		double move_amount=0.15;
+		double turn_amount=5;
+		double move_amount=0.1;//0.005;
 		
 		
 		if(pressed_keys.getOrDefault(KeyEvent.VK_A,false)) {
@@ -35,6 +35,20 @@ public class Keyboard implements KeyListener {
 		if(pressed_keys.getOrDefault(KeyEvent.VK_SHIFT,false)) {
 			Main.control_position_altitudine=-move_amount;
 		}
+		
+		if(pressed_keys.getOrDefault(KeyEvent.VK_LEFT,false)) {
+			Main.control_angle_y+=turn_amount;
+		}
+		if(pressed_keys.getOrDefault(KeyEvent.VK_RIGHT,false)) {
+			Main.control_angle_y-=turn_amount;
+		}
+		if(pressed_keys.getOrDefault(KeyEvent.VK_UP,false)) {
+			Main.control_angle_x+=turn_amount;
+		}
+		if(pressed_keys.getOrDefault(KeyEvent.VK_DOWN,false)) {
+			Main.control_angle_x-=turn_amount;
+		}
+		
 	}
 	@Override
 	public void keyPressed(KeyEvent arg0) {

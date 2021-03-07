@@ -5,6 +5,14 @@ public class Vector extends Point implements Cloneable{
 	public double yAngle;
 	public double zAngle;
 	
+	public Vector() {
+		
+	}
+	public Vector(Point p) {
+		x=p.x;
+		y=p.y;
+		z=p.z;
+	}
 	public Object clone(){  
 		Vector temp=new Vector();
 		temp.x=x;

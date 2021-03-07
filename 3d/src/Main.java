@@ -36,7 +36,7 @@ public class Main {
 	public static Graphics graph;
 	public static Keyboard keyboard;
 	
-	public static boolean position_control=false;
+	public static boolean position_control=true;
 	public static double control_angle_x=0;
 	public static double control_angle_y=0;
 	public static double control_position_sideways=0;
@@ -70,9 +70,9 @@ public class Main {
 		graph=panel.getGraphics();
         
 		scene.setDimensions(w, h);
-		//scene.read3DObject("obj.txt");
+		scene.read3DObject("obj.txt");
 //		scene.read3DObject("axis.obj");
-		scene.read3DObject("spaceship.obj");
+		//scene.read3DObject("spaceship.obj");
 		
 		while(true) {
 			keyboard.virtualHoldKey();
