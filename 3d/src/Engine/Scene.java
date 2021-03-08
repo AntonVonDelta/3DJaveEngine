@@ -60,11 +60,11 @@ public class Scene {
 		Collections.sort(depth_sorted);
 		//depth_sorted=orderByZDepth(depth_sorted)
 		try{
-			int a=depth_sorted.get(2).compareTo(depth_sorted.get(0));
-			int b=depth_sorted.get(1).compareTo(depth_sorted.get(7));
+			int a=depth_sorted.get(5).compareTo(depth_sorted.get(6));
+			int b=depth_sorted.get(4).compareTo(depth_sorted.get(6));
 			int c=depth_sorted.get(3).compareTo(depth_sorted.get(7));
 			
-			int r=depth_sorted.get(6).compareTo(depth_sorted.get(7));
+			int r=depth_sorted.get(0).compareTo(depth_sorted.get(0));
 			
 			int test=0;
 		}catch(Exception ex) {
@@ -90,7 +90,11 @@ public class Scene {
 				g.drawPolygon(new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
 						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
 				
-				//System.out.println(temp.toString());
+				for(Point pp:temp.getEquidistantPoints()) {
+					Point projected=projectCameraCoordinatesToScreen(pp);
+					g.setColor(Color.RED);
+					g.fillArc((int)(projected.x), (int)(projected.y), 10, 10, 0,360);
+				}
 			}else {
 				g.setColor(temp.color);			
 				g.fillPolygon(new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
@@ -163,7 +167,7 @@ public class Scene {
 
 						temp.color = new Color(r, g, b);
 					}
-					if (pos.length >= 4) {
+					if (pos.length >= 5) {
 						// A debug name is provided
 						temp.debug_name=pos[4];
 					}
