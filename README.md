@@ -13,11 +13,18 @@ The objects to be rendered should be stored in `obj.txt` file.
 The format is at it follows:
   - Any empty line is ignored
   - Any line starting with `/` is ignored
-  - Every valid line describes a triangle followed optionally by the color
+  - Every valid text line describes a triangle followed optionally by the color or by the debug name
+      - The debug name is given to the triangle on the same line
+      - Can only be given if a color is already specified a.k.a there cannot be a triangle with a debug name but not a color
   - Every line consists of three `blocks` separated by empty spaces and representing individual point coordinates for the corner of triangle
-    - `x1,y1,z1` \<space\> `x2,y2,z2` \<space\> `x3,y3,z3` \<space\> \<color\> 
+    - `x1,y1,z1` \<`space`\> `x2,y2,z2` \<`space`\> `x3,y3,z3` \<`space`\> \<`color`\> \<`debug_name`\>
   - Color format is in RGB values separated by comma:
     - `r,g,b`   
+
+# Known Issues
+  - Depth ordering inaccuracies
+ 
+
 # Rendering Examples
 ![image](https://user-images.githubusercontent.com/25268629/110204895-2532d700-7e7e-11eb-813d-b8256f4c9d78.png)
 ![image](https://user-images.githubusercontent.com/25268629/110189181-f1789280-7e26-11eb-8409-ac71e8bd2d31.png)
