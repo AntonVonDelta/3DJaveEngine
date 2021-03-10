@@ -18,7 +18,7 @@ import Structures.Graph;
 import Structures.Pair;
 
 public class Scene {
-	private static boolean DEBUG=true;
+	private static boolean DEBUG=false;
 	private static Point DEBUG_POINT=new Point();
 	
 	private static int w, h;
@@ -57,10 +57,13 @@ public class Scene {
 		}
 
 		// Z Sorting for the depth
-		Collections.sort(depth_sorted);
-		//depth_sorted=orderByZDepth(depth_sorted)
+		//Collections.sort(depth_sorted);
+		//depth_sorted=orderByZDepth(depth_sorted);
+		depth_sorted=looseySort(depth_sorted);
+		
+		
 		try{
-			int a=depth_sorted.get(5).compareTo(depth_sorted.get(6));
+			int a=depth_sorted.get(3).compareTo(depth_sorted.get(2));
 			int b=depth_sorted.get(4).compareTo(depth_sorted.get(6));
 			int c=depth_sorted.get(3).compareTo(depth_sorted.get(7));
 			
@@ -78,7 +81,6 @@ public class Scene {
 			for (int j = 0; j < 3; j++) {
 				new_persp.v[j] = projectCameraCoordinatesToScreen(temp.v[j]);
 			}
-
 			
 			if(temp.highlight) {
 				g.setColor(Color.WHITE);			
@@ -387,6 +389,35 @@ public class Scene {
 		return temp.a;
 	}
 
+	// A special sort that isn't rigid
+	// Takes into account than when comparing items the order may be flexible when the comparison
+	// returns 0 or equality
+	// Better approach than default sort which will arrange those elements on the same level
+	private List<Triangle> looseySort(List<Triangle> list){
+		if(list.size()==1) return list;
+		Graph<Triangle> dependency_graph=new Graph<Triangle>();
+		
+		for(int i=0;i<list.size();i++) dependency_graph.addVertex(list.get(i));
+		
+		for(int i=0;i<list.size()-1;i++) {
+			dependency_graph.addVertex(list.get(i));
+			
+			for(int j=i+1;j<list.size();j++) {
+				Triangle first=list.get(i);
+				Triangle second=list.get(j);
+				int order=first.compareTo(second);
+				
+				if(order==0) continue;
+				if(order>0) dependency_graph.addEdge(second, first);
+				else dependency_graph.addEdge(first,second);
+			}
+		}
+		
+		// Also add the last triangle because it's possible it was skipped in the loop
+		dependency_graph.addVertex(list.get(list.size()-1));
+		
+		return dependency_graph.topologicalSort();
+	}
 	// Orders the triangles using a ZBuffer improvement without however the rasterization and drawing
 	// This is an improved Painter's algorithm
 	// List must be camera relative triangles and clipped
@@ -394,13 +425,9 @@ public class Scene {
 		Graph<Triangle> dependency_graph=new Graph<Triangle>();
 		Set<Triangle> unprocessed_triangles=new HashSet<Triangle>();
 		
-//		for(Triangle temp:list) {
-//			unprocessed_triangles.add(temp);
-//		}
-		
-		for(int x=0;x<w;x+=20) {
-			for(int y=0;y<h;y+=20) {
-				PriorityQueue<Pair<Triangle> > heap = new PriorityQueue<Pair<Triangle>>();
+		for(int x=0;x<w;x+=10) {
+			for(int y=0;y<h;y+=10) {
+				List<Pair<Triangle> > heap = new ArrayList<Pair<Triangle>>();
 				double virtual_x=((double)x-w/2)/(w/2);
 				double virtual_y=-((double)y-h/2)/(w/2);	// We need negative here because on screen the points are flipped on y axis
 				
@@ -430,17 +457,17 @@ public class Scene {
 					heap.add(new Pair<Triangle>(dist,temp));
 				}
 				
-				while(!heap.isEmpty()) {
-					Pair<Triangle> temp=heap.poll();
-					if(heap.size()==0) {
-						// No more triangles to read
-						dependency_graph.addVertex(temp.getValue());
-						break;
-					}
-					
-					Pair<Triangle> next_node=heap.poll();
-					
-					dependency_graph.addEdge(next_node.getValue(), temp.getValue());
+				Collections.sort(heap);
+				
+				if(heap.isEmpty()) continue;
+				if(heap.size()==1) {
+					dependency_graph.addVertex(heap.get(0).getValue());
+					continue;
+				}
+				for(int i=0;i<heap.size()-1;i++) {
+					Pair<Triangle> first=heap.get(i);
+					Pair<Triangle> next_node=heap.get(i+1);
+					dependency_graph.addEdge(next_node.getValue(), first.getValue());
 				}
 			}
 		}

@@ -6,7 +6,9 @@ public class Vector extends Point implements Cloneable{
 	public double zAngle;
 	
 	public Vector() {
-		
+		x=0;
+		y=0;
+		z=0;
 	}
 	public Vector(Point p) {
 		x=p.x;
@@ -24,6 +26,9 @@ public class Vector extends Point implements Cloneable{
 	    return temp; 
 	}
 	
+	public double getLength() {
+		return Math.sqrt(x*x+y*y+z*z);
+	}
 	public Vector normalize() {
 		Vector temp=new Vector();
 		double r=Math.sqrt(x*x+y*y+z*z);

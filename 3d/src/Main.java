@@ -71,8 +71,8 @@ public class Main {
         
 		scene.setDimensions(w, h);
 		scene.read3DObject("obj.txt");
-//		scene.read3DObject("axis.obj");
-		//scene.read3DObject("spaceship.obj");
+		//scene.read3DObject("axis.obj");
+		scene.read3DObject("spaceship.obj");
 		
 		while(true) {
 			keyboard.virtualHoldKey();

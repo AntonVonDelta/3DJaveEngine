@@ -4,18 +4,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class Graph<T> {
-	private Map<T,List<T>> memory=new HashMap<T,List<T>>();
+	private LinkedHashMap<T,LinkedHashSet<T>> memory=new LinkedHashMap<T, LinkedHashSet<T>>();
 	
 	public void addEdge(T start,T end) {
-		if(!memory.containsKey(start)) {
-			memory.put(start, new ArrayList<T>());
-		}
-		
 		// Also add the vertex components
 		addVertex(start);
 		addVertex(end);
@@ -30,7 +28,7 @@ public class Graph<T> {
 	
 	public void addVertex(T node) {
 		if(!memory.containsKey(node)) {
-			memory.put(node, new ArrayList<>());
+			memory.put(node, new LinkedHashSet<>());
 		}
 	}
 	
@@ -64,7 +62,7 @@ public class Graph<T> {
 		// Mark current node
 		local_visited.add(current);
 		
-		List<T> adjacent=memory.get(current);
+		LinkedHashSet<T> adjacent=memory.get(current);
 		for(T connected_node:adjacent) {
 			recursive(connected_node,global_visited,local_visited,order);
 		}
