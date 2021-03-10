@@ -7,7 +7,7 @@ import java.util.List;
 public class Triangle implements Cloneable, Comparable<Triangle> {
 	public Point v[] = new Point[3];
 	public Color color = Color.DARK_GRAY;
-	public boolean highlight = false;
+	public boolean highlight = false;	// Used when right clicking a visible triangle
 	public String debug_name = "";
 	private double points_per_area = 4 / 2; // Controls the resolution for scanning points on large triangles
 
@@ -90,35 +90,55 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 			}
 		}
 
+		// Default Painter's algorithm
 		//if (order == 0)
 		//	return -Double.compare(center_dist1, center_dist2);
 
-		if(order==0) {
-			return 0;
-			// We must do one more check before returning 0
-//			Point triangle_intersect=getCenterOfIntersection(o);
-//			if(triangle_intersect==null) return 0;
-//			
-//			Vector line=new Vector(triangle_intersect);
-//			line.z=1;
-//			Point intersection = null;
-//			intersection = Vector.intersectPlane(o.getNormal(), line.normalize(), o.v[0], line_origin);
-//			if (intersection != null && o.isPointInside(intersection)) {
-//				// Now we can compare the triangles
-//				double dist = Math.sqrt(line.x * line.x + line.y * line.y + line.z * line.z);
-//				double intersect_dist = Math.sqrt(intersection.x * intersection.x + intersection.y * intersection.y
-//						+ intersection.z * intersection.z);
-//				if (!doubleEq(dist - intersect_dist, 0))
-//					return -Double.compare(dist, intersect_dist);
-//			}
-//			return 0;
-		}
+		// This return condition is not complete
+		// The triangles may still very well intersect but the intersection may not contain the sampling points (like the center and the vertexes)
+		if(order==0) return 0;
+		
 		return Integer.signum(order);
-
-		// Default Painter's algorithm
-		//
 	}
 
+	// Extended compare routine with 2d intersection of the projected triangles
+	// Requires knowledge of the z distance
+	public int compareTo(Triangle o,Scene scene_environment) {
+		int result=compareTo(o);
+		if(result==0) {
+			// We must apply further checks to ensure the triangles indeed do not overlap
+			Vector line=scene_environment.cameraSpaceTriangleIntersection(this,o);
+			if(line==null) return 0;
+			
+			// The line origin is the "eye" aka position 0,0,0
+			Point line_origin = new Point();
+			line_origin.x = 0;
+			line_origin.y = 0;
+			line_origin.z = 0;
+			
+			// Intersection with "o" plane
+			Point intersection_plane2 = null;
+			intersection_plane2 = Vector.intersectPlane(o.getNormal(), line.normalize(), o.v[0], line_origin);
+			if (intersection_plane2 == null || !o.isPointInside(intersection_plane2)) return 0;
+			
+			// Intersection with this triangle's plane
+			Point intersection_plane1 = null;
+			intersection_plane1 = Vector.intersectPlane(getNormal(), line.normalize(), v[0], line_origin);
+			if (intersection_plane1 == null || !isPointInside(intersection_plane1)) return 0;
+			
+			double intersect_dist1 = Math.sqrt(intersection_plane1.x * intersection_plane1.x + intersection_plane1.y * intersection_plane1.y
+					+ intersection_plane1.z * intersection_plane1.z);
+			double intersect_dist2 = Math.sqrt(intersection_plane2.x * intersection_plane2.x + intersection_plane2.y * intersection_plane2.y
+					+ intersection_plane2.z * intersection_plane2.z);
+			
+			return -Double.compare(intersect_dist1, intersect_dist2);
+
+		}
+		
+		return result;
+	}
+	
+	
 	public List<Point> getEquidistantPoints() {
 		List<Point> result = new ArrayList<Point>();
 
@@ -212,56 +232,7 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		generateSamplePoints(temp, level, result);
 	}
 
-	// Intersects the triangles in 2D effectivelly ignoring the z component
-	// Returns the center point of the intersection
-	private Point getCenterOfIntersection(Triangle other) {
-		Point result=new Point();
-		int points_count=0;
-		
-		for(int i=0;i<3;i++) {
-			Point p0=v[i];		// This will be our origin
-			Point p1=v[(i+1)%3];
-			Vector prime_line_vec=new Vector();
-			prime_line_vec.x=p1.x-p0.x;
-			prime_line_vec.y=p1.y-p0.y;
-			
-			for(int j=0;j<3;j++) {
-				Point p2=other.v[j];
-				Point p3=other.v[(j+1)%3];
-				Vector secund_line_vec=new Vector();
-				secund_line_vec.x=p3.x-p2.x;
-				secund_line_vec.y=p3.y-p2.y;
-				
-				Point intersection=new Point();
-				double dot_product=prime_line_vec.dot(secund_line_vec);
-				
-				if (doubleEq(dot_product - prime_line_vec.getLength()*secund_line_vec.getLength(), 0)) {
-					//The line are perpendicular
-					continue;
-				}
-				
-				
-				double d=prime_line_vec.x*secund_line_vec.y-prime_line_vec.y*secund_line_vec.x;
-				double n=(p2.x-p0.x)*secund_line_vec.y-
-						(p2.y-p0.y)*secund_line_vec.x;
-				
-				// Bigger then 1 means the point is not on the two segments
-				if(n>1) continue;
-				
-				points_count++;
-				result.x+=p0.x+n*prime_line_vec.x;
-				result.y+=p0.y+n*prime_line_vec.y;
-			}
-		}
-		
-		// We assume the intersection of two triangles given to this function will only generate 4 points and not less
-		// Less would mean a corner is inside one of the triangles, case which would already be ruled out before this function
-		if(points_count==0 || points_count<=3) return null;
-		
-		result.x/=points_count;
-		result.y/=points_count;
-		return result;
-	}
+
 	
 	public boolean isPointInside(Point p) {
 		return sameNormalSide(p, v[0], v[1], v[2]) && sameNormalSide(p, v[1], v[0], v[2])
