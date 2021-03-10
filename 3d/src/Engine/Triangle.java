@@ -293,6 +293,21 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		return cross1.dot(cross2) >= 0;
 	}
 
+	// Get the color depending on the normal
+	public Color getColor(Scene scene) {
+		Vector normal=getNormal();
+		Point center=getCenter();
+		
+		Vector line=new Vector(center).normalize();
+		double luminosity=normal.dot(line);
+		
+		// This triangle should not be visible
+		if(luminosity>0) luminosity=0.05;
+		double min_luminosity=0.15;
+		luminosity=min_luminosity+Math.abs(luminosity)*(1-min_luminosity);
+		
+		return new Color((int)(color.getRed()*luminosity),(int)(color.getGreen()*luminosity),(int)(color.getBlue()*luminosity));
+	}
 	private static boolean doubleEq(double a, double b) {
 		double error = 0.000001;
 		return Math.abs(a - b) <= error;

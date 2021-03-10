@@ -43,7 +43,7 @@ public class Scene {
 
 	public void drawOnGraphics(Graphics g) {
 		g.clearRect(0, 0, w, h);
-
+		cache_sorted_triangles=false;
 		if(!cache_sorted_triangles) {
 			depth_sorted = new ArrayList<>();
 			for (int i = 0; i < triangles.size(); i++) {
@@ -62,10 +62,9 @@ public class Scene {
 		
 		
 			// Z Sorting for the depth
-			// Collections.sort(depth_sorted);	// Not good because a value of zero does not means objects have the rendering priority
-			// depth_sorted=orderByZDepth(depth_sorted);	// CPU heavy when too many pixels/triangles
+			//Collections.sort(depth_sorted);	// Not good because a value of zero does not means objects have the rendering priority
+			//depth_sorted=orderByZDepth(depth_sorted);	// CPU heavy when too many pixels/triangles
 			depth_sorted = looseySort(depth_sorted);		// The best so far
-			cache_sorted_triangles=true;
 		}
 
 
@@ -93,7 +92,7 @@ public class Scene {
 					g.fillArc((int) (projected.x), (int) (projected.y), 10, 10, 0, 360);
 				}
 			} else {
-				g.setColor(temp.color);
+				g.setColor(temp.getColor(this));
 				g.fillPolygon(
 						new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
 						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
@@ -251,14 +250,18 @@ public class Scene {
 	private Triangle[] clipTriangle(Triangle triangle) {
 		List<Point> visible_points = new ArrayList<Point>();
 		List<Point> hidden_points = new ArrayList<Point>();
-
+		int orientation_hint=0;	// Used to reconstruct the new triangles while preserving the orientation
+		
 		triangle = applyCameraTransformation(triangle);
 
-		for (Point p : triangle.v) {
+		for(int i=0;i<triangle.v.length;i++) {
+			Point p=triangle.v[i];
 			if (isInBack(p)) {
 				hidden_points.add(p);
-			} else
+			} else {
+				orientation_hint+=i;
 				visible_points.add(p);
+			}
 		}
 
 		// All corners are visible. Thus the triangle is also visible
@@ -275,14 +278,25 @@ public class Scene {
 
 			Point intersect1 = clipLine(visible_points.get(0), hidden_points.get(0));
 			Point intersect2 = clipLine(visible_points.get(1), hidden_points.get(0));
+			
+			if(orientation_hint%2==0) {
+				temp1.v[0] = visible_points.get(0);
+				temp1.v[1] = intersect1;
+				temp1.v[2] = visible_points.get(1);
 
-			temp1.v[0] = visible_points.get(0);
-			temp1.v[1] = intersect1;
-			temp1.v[2] = visible_points.get(1);
+				temp2.v[0] = visible_points.get(1);
+				temp2.v[1] = intersect1;
+				temp2.v[2] = intersect2;
+			}else {
+				temp1.v[0] = visible_points.get(0);
+				temp1.v[1] = visible_points.get(1);
+				temp1.v[2] = intersect1;
 
-			temp2.v[0] = intersect1;
-			temp2.v[1] = intersect2;
-			temp2.v[2] = visible_points.get(1);
+				temp2.v[0] = visible_points.get(1);
+				temp2.v[1] = intersect2;
+				temp2.v[2] = intersect1;
+			}
+
 
 			return new Triangle[] { temp1, temp2 };
 		}
@@ -295,9 +309,16 @@ public class Scene {
 		Point intersect1 = clipLine(visible_points.get(0), hidden_points.get(0));
 		Point intersect2 = clipLine(visible_points.get(0), hidden_points.get(1));
 
-		temp1.v[0] = visible_points.get(0);
-		temp1.v[1] = intersect1;
-		temp1.v[2] = intersect2;
+		if(orientation_hint%2==0) {
+			temp1.v[0] = visible_points.get(0);
+			temp1.v[1] = intersect1;
+			temp1.v[2] = intersect2;
+		}else {
+			temp1.v[0] = intersect1;
+			temp1.v[1] = visible_points.get(0);
+			temp1.v[2] = intersect2;
+		}
+
 
 		return new Triangle[] { temp1 };
 	}
@@ -465,7 +486,7 @@ public class Scene {
 				}
 
 				Collections.sort(heap);
-
+				
 				if (heap.isEmpty())
 					continue;
 				if (heap.size() == 1) {
@@ -561,6 +582,7 @@ public class Scene {
 		}
 		
 		if (original_triangle != null) {
+			cache_sorted_triangles=false;
 			original_triangle.highlight = !original_triangle.highlight;
 		}
 	}
