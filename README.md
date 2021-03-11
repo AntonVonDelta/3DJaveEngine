@@ -7,10 +7,11 @@ The math behind is very simple - without any matrix transformations. Just trigon
   - FOV
   - Rotation/Translation for the entire scene/camera
   - Triangle/Line Clipping
-  - **NEW** 3D Depth algorithm - Modified Painter's algo - now using a dependency graph which is topologically sorted and which generates a perfect result
+  - **New** 3D Depth algorithm - Modified Painter's algo - now using a dependency graph which is topologically sorted and which generates a perfect result
   - Right click to select the visible triangle
-  - **NEW** Added lighting effects
-
+  - **New** Added light effects
+  - **New** Added culling filter and improved speed
+ 
 # Objects file format
 The objects to be rendered should be stored in `obj.txt` file.
 The format is at it follows:
