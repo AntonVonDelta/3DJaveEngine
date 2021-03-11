@@ -14,6 +14,15 @@ public class Point implements Cloneable{
 		z=pos_z;
 	}
 	
+	// Returns a vector from this point to the one given
+	public Vector to(Point other) {
+		Vector result=new Vector();
+		result.x=other.x-x;
+		result.y=other.y-y;
+		result.z=other.z-z;
+		return result;
+	}
+	
 	public Object clone(){  
 		Point temp=new Point();
 		temp.x=x;

@@ -71,11 +71,11 @@ public class Main {
         
 		scene.setDimensions(w, h);
 		
-		scene.read3DObject("obj.txt");
+		//scene.read3DObject("obj.txt");
 		//scene.read3DObject("axis.obj");
-		scene.read3DObject("spaceship.obj");
+		//scene.read3DObject("spaceship.obj");
 		//scene.read3DObject("mountains.obj");
-		//scene.read3DObject("teapot.obj");
+		scene.read3DObject("teapot.obj");
 		
 		while(true) {
 			keyboard.virtualHoldKey();

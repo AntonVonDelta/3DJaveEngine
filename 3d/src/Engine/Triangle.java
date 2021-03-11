@@ -10,14 +10,14 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 	public boolean highlight = false;	// Used when right clicking a visible triangle
 	public String debug_name = "";
 	private double points_per_area = 4 / 2; // Controls the resolution for scanning points on large triangles
-
+	
 	public Triangle() {
 		v[0] = new Point();
 		v[1] = new Point();
 		v[2] = new Point();
 
-		color = new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
-
+		//color = new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
+		color=color.RED;
 	}
 
 	public String toString() {
@@ -33,12 +33,68 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		temp.color = color;
 		temp.highlight = highlight;
 		temp.debug_name = debug_name;
-
+		
 		return temp;
 	}
 
 	@Override
 	public int compareTo(Triangle o) {
+		Point center1 = getCenter();
+		Point center2 = o.getCenter();
+		double center_dist1 = Math.sqrt(center1.x * center1.x + center1.y * center1.y + center1.z * center1.z);
+		double center_dist2 = Math.sqrt(center2.x * center2.x + center2.y * center2.y + center2.z * center2.z);
+		int order =	samplingPointsIntersection(o);
+		
+		// Default Painter's algorithm
+		if (order == 0)
+			return -Double.compare(center_dist1, center_dist2);
+
+		// This return condition is not complete
+		// The triangles may still very well intersect but the intersection may not contain the sampling points (like the center and the vertexes)
+		if(order==0) return 0;
+		
+		return Integer.signum(order);
+	}
+
+	// Extended compare routine with 2d intersection of the projected triangles
+	// Requires knowledge of the z distance
+	public int compareTo(Triangle o,Scene scene_environment) {
+		int order=samplingPointsIntersection(o);
+		if(order==0) {
+			// We must apply further checks to ensure the triangles indeed do not overlap
+			Vector line=scene_environment.cameraSpaceTriangleIntersection(this,o);
+			if(line==null) return 0;
+			
+			// The line origin is the "eye" aka position 0,0,0
+			Point line_origin = new Point();
+			line_origin.x = 0;
+			line_origin.y = 0;
+			line_origin.z = 0;
+			
+			// Intersection with "o" plane
+			Point intersection_plane2 = null;
+			intersection_plane2 = Vector.intersectPlane(o.getNormal(), line.normalize(), o.v[0], line_origin);
+			if (intersection_plane2 == null || !o.isPointInside(intersection_plane2)) return 0;
+			
+			// Intersection with this triangle's plane
+			Point intersection_plane1 = null;
+			intersection_plane1 = Vector.intersectPlane(getNormal(), line.normalize(), v[0], line_origin);
+			if (intersection_plane1 == null || !isPointInside(intersection_plane1)) return 0;
+			
+			double intersect_dist1 = Math.sqrt(intersection_plane1.x * intersection_plane1.x + intersection_plane1.y * intersection_plane1.y
+					+ intersection_plane1.z * intersection_plane1.z);
+			double intersect_dist2 = Math.sqrt(intersection_plane2.x * intersection_plane2.x + intersection_plane2.y * intersection_plane2.y
+					+ intersection_plane2.z * intersection_plane2.z);
+			
+			return -Double.compare(intersect_dist1, intersect_dist2);
+
+		}
+		
+		return order;
+	}
+	
+	// Orders the two triangles based on sampling points
+	private int samplingPointsIntersection(Triangle o) {
 		Point center1 = getCenter();
 		Point center2 = o.getCenter();
 		double center_dist1 = Math.sqrt(center1.x * center1.x + center1.y * center1.y + center1.z * center1.z);
@@ -89,55 +145,11 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 					order += -Double.compare(intersect_dist, dist);
 			}
 		}
-
-		// Default Painter's algorithm
-		//if (order == 0)
-		//	return -Double.compare(center_dist1, center_dist2);
-
-		// This return condition is not complete
-		// The triangles may still very well intersect but the intersection may not contain the sampling points (like the center and the vertexes)
-		if(order==0) return 0;
+		
+		// If order is 0 the triangles may still very well intersect but the intersection may not contain the sampling points (like the center and the vertexes)
 		
 		return Integer.signum(order);
 	}
-
-	// Extended compare routine with 2d intersection of the projected triangles
-	// Requires knowledge of the z distance
-	public int compareTo(Triangle o,Scene scene_environment) {
-		int result=compareTo(o);
-		if(result==0) {
-			// We must apply further checks to ensure the triangles indeed do not overlap
-			Vector line=scene_environment.cameraSpaceTriangleIntersection(this,o);
-			if(line==null) return 0;
-			
-			// The line origin is the "eye" aka position 0,0,0
-			Point line_origin = new Point();
-			line_origin.x = 0;
-			line_origin.y = 0;
-			line_origin.z = 0;
-			
-			// Intersection with "o" plane
-			Point intersection_plane2 = null;
-			intersection_plane2 = Vector.intersectPlane(o.getNormal(), line.normalize(), o.v[0], line_origin);
-			if (intersection_plane2 == null || !o.isPointInside(intersection_plane2)) return 0;
-			
-			// Intersection with this triangle's plane
-			Point intersection_plane1 = null;
-			intersection_plane1 = Vector.intersectPlane(getNormal(), line.normalize(), v[0], line_origin);
-			if (intersection_plane1 == null || !isPointInside(intersection_plane1)) return 0;
-			
-			double intersect_dist1 = Math.sqrt(intersection_plane1.x * intersection_plane1.x + intersection_plane1.y * intersection_plane1.y
-					+ intersection_plane1.z * intersection_plane1.z);
-			double intersect_dist2 = Math.sqrt(intersection_plane2.x * intersection_plane2.x + intersection_plane2.y * intersection_plane2.y
-					+ intersection_plane2.z * intersection_plane2.z);
-			
-			return -Double.compare(intersect_dist1, intersect_dist2);
-
-		}
-		
-		return result;
-	}
-	
 	
 	public List<Point> getEquidistantPoints() {
 		List<Point> result = new ArrayList<Point>();
@@ -295,18 +307,25 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 
 	// Get the color depending on the normal
 	public Color getColor(Scene scene) {
+		Point light=new Point(0,0,1);	//getCenter(); // Using the center will produce uneven light effects
+		Vector light_vec=new Vector(light).normalize();
+		double max_light_distance=10;	// Maximum distance the light will work over
+		
 		Vector normal=getNormal();
-		Point center=getCenter();
+		double luminosity=normal.dot(light_vec);
 		
-		Vector line=new Vector(center).normalize();
-		double luminosity=normal.dot(line);
+		// This triangle should not be visible. Give a small backlight
+		if(luminosity>0) luminosity=0.1;
 		
-		// This triangle should not be visible
-		if(luminosity>0) luminosity=0.05;
-		double min_luminosity=0.15;
-		luminosity=min_luminosity+Math.abs(luminosity)*(1-min_luminosity);
+		double min_luminosity=0.1;
+		luminosity=min_luminosity+Math.abs(luminosity);	//min_luminosity+Math.abs(luminosity)*(1-min_luminosity);	// With this formula the maximum luminosity will be the original color which may not be ligthen enough
 		
-		return new Color((int)(color.getRed()*luminosity),(int)(color.getGreen()*luminosity),(int)(color.getBlue()*luminosity));
+		
+		int r=(int)Math.min(255, color.getRed()*luminosity);
+		int g=(int)Math.min(255, color.getGreen()*luminosity);
+		int b=(int)Math.min(255, color.getBlue()*luminosity);
+		
+		return new Color(r,g,b);
 	}
 	private static boolean doubleEq(double a, double b) {
 		double error = 0.000001;

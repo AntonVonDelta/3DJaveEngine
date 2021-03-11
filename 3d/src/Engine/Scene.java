@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -43,28 +44,33 @@ public class Scene {
 
 	public void drawOnGraphics(Graphics g) {
 		g.clearRect(0, 0, w, h);
-		cache_sorted_triangles=false;
+		
 		if(!cache_sorted_triangles) {
 			depth_sorted = new ArrayList<>();
 			for (int i = 0; i < triangles.size(); i++) {
-				Triangle temp = triangles.get(i);
-				Triangle[] clipped_results = clipTriangle(temp);
+				Triangle world_triangle = triangles.get(i);
+				Triangle camera_triangle=applyCameraTransformation(world_triangle);
+				
+				// Culling check
+				if(!isTriangleVisible(camera_triangle)) continue;
+				
+				Triangle[] clipped_results = clipTriangle(camera_triangle);
 	
 				// The triangle is invisble
 				if (clipped_results == null)
 					continue;
-	
+				
 				for (Triangle clipped_triangle : clipped_results) {
 					depth_sorted.add(clipped_triangle);
 				}
 			}
 
-		
-		
 			// Z Sorting for the depth
-			//Collections.sort(depth_sorted);	// Not good because a value of zero does not means objects have the rendering priority
+			Collections.sort(depth_sorted);	// Not good because a value of zero does not means objects have the rendering priority
 			//depth_sorted=orderByZDepth(depth_sorted);	// CPU heavy when too many pixels/triangles
-			depth_sorted = looseySort(depth_sorted);		// The best so far
+			//depth_sorted = looseySort(depth_sorted);		// The best so far
+
+			cache_sorted_triangles=true;
 		}
 
 
@@ -245,14 +251,14 @@ public class Scene {
 	}
 
 	// Clips a triangle against the near plane
-	// Requires world coordinates
+	// Requires camera coordinates
 	// The coordinates relative to the camera aka transformed
 	private Triangle[] clipTriangle(Triangle triangle) {
 		List<Point> visible_points = new ArrayList<Point>();
 		List<Point> hidden_points = new ArrayList<Point>();
 		int orientation_hint=0;	// Used to reconstruct the new triangles while preserving the orientation
 		
-		triangle = applyCameraTransformation(triangle);
+		//triangle = applyCameraTransformation(triangle);
 
 		for(int i=0;i<triangle.v.length;i++) {
 			Point p=triangle.v[i];
@@ -543,7 +549,8 @@ public class Scene {
 		// inside an object or
 		// clicking beyond a half-cut triangle
 		for (Triangle temp_triangle : triangles) {
-			Triangle[] clipped_results = clipTriangle(temp_triangle);
+			Triangle camera_triangle=applyCameraTransformation(temp_triangle);
+			Triangle[] clipped_results = clipTriangle(camera_triangle);
 
 			// The triangle is invisble
 			if (clipped_results == null)
@@ -878,6 +885,10 @@ public class Scene {
 		result.z=z_near;
 		return result;
 
+	}
+	
+	private boolean isTriangleVisible(Triangle t) {
+		return new Vector(t.getCenter()).dot(t.getNormal())<=0;
 	}
 
 	public Vector getCameraVec() {

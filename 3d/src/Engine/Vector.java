@@ -51,6 +51,21 @@ public class Vector extends Point implements Cloneable{
 		
 		return temp;
 	}
+	
+	public Vector substract(Point other) {
+		Vector result=new Vector();
+		result.x=x-other.x;
+		result.y=y-other.y;
+		result.z=z-other.z;
+		return result;
+	}
+	public Vector substract(Vector other) {
+		Vector result=new Vector();
+		result.x=x-other.x;
+		result.y=y-other.y;
+		result.z=z-other.z;
+		return result;
+	}
 	// Returns the point of intersection between line and plane
 	// plane_normal 	- The normal of the plane
 	// line_direction 	- The vector describing the line
