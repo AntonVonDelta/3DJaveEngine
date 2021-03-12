@@ -9,8 +9,8 @@ public class Keyboard implements KeyListener {
 	Map<Integer,Boolean> pressed_keys=new HashMap<Integer,Boolean>();
 	
 	public void virtualHoldKey() {
-		double turn_amount=5;
-		double move_amount=0.1;//0.005;
+		double turn_amount=1;
+		double move_amount=0.01;//0.005;
 		
 		
 		if(pressed_keys.getOrDefault(KeyEvent.VK_A,false)) {

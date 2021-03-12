@@ -55,7 +55,7 @@ public class Scene {
 				if(!isTriangleVisible(camera_triangle)) continue;
 				
 				Triangle[] clipped_results = clipTriangle(camera_triangle);
-	
+				
 				// The triangle is invisble
 				if (clipped_results == null)
 					continue;
@@ -191,20 +191,23 @@ public class Scene {
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			String st;
 			List<Point> vertexes = new ArrayList<Point>();
-
+			List<Vector> normals = new ArrayList<Vector>();
+			
 			while ((st = br.readLine()) != null) {
 				Triangle face = new Triangle();
-				int mode = 0; // 0 - vertex mode; 1- triangle mode
+				int mode = 0; // 0 - vertex mode; 1- triangle mode; 2 - normal
 				String[] pos = st.split(" ");
 
 				if (st.startsWith("/") || pos.length < 4)
 					continue;
 
 				// Uknown mode
-				if (!pos[0].equals("v") && !pos[0].equals("f"))
+				if (!pos[0].equals("v") && !pos[0].equals("f") && !pos[0].equals("vn"))
 					continue;
 
-				mode = pos[0].equals("v") ? 0 : 1;
+				if(pos[0].equals("v")) mode=0;
+				else if(pos[0].equals("f")) mode=1;
+				else mode=2;
 
 				if (pos.length >= 4) {
 					if (mode == 0) {
@@ -217,17 +220,28 @@ public class Scene {
 
 						vertexes.add(temp);
 						continue;
-					} else {
+					} else if(mode==1){
 						// A triangle is being built
-
-						int vertex1_index = Integer.parseInt(pos[1]) - 1;
-						int vertex2_index = Integer.parseInt(pos[2]) - 1;
-						int vertex3_index = Integer.parseInt(pos[3]) - 1;
+						String v1=pos[1].split("/")[0];
+						String v2=pos[2].split("/")[0];
+						String v3=pos[3].split("/")[0];
+						
+						int vertex1_index = Integer.parseInt(v1) - 1;
+						int vertex2_index = Integer.parseInt(v2) - 1;
+						int vertex3_index = Integer.parseInt(v3) - 1;
 
 						face.v[0] = (Point) vertexes.get(vertex1_index).clone();
 						face.v[1] = (Point) vertexes.get(vertex2_index).clone();
 						face.v[2] = (Point) vertexes.get(vertex3_index).clone();
 
+					}else {
+						// A normal is being built
+						//double nx=Double.parseDouble(pos[1]);
+						//double ny=Double.parseDouble(pos[2]);
+						//double nz=Double.parseDouble(pos[3]);
+						//normals.add(new Vector(nx,ny,nz));
+						
+						continue;
 					}
 				}
 				if (pos.length == 5 && mode == 1) {
@@ -888,7 +902,7 @@ public class Scene {
 	}
 	
 	private boolean isTriangleVisible(Triangle t) {
-		return new Vector(t.getCenter()).dot(t.getNormal())<=0;
+		return new Vector(t.getCenter()).dot(t.getNormal())<0;
 	}
 
 	public Vector getCameraVec() {

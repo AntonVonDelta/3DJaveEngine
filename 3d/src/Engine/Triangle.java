@@ -10,7 +10,16 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 	public boolean highlight = false;	// Used when right clicking a visible triangle
 	public String debug_name = "";
 	private double points_per_area = 4 / 2; // Controls the resolution for scanning points on large triangles
+	private Vector normal=null;
 	
+	public Triangle(Point p0,Point p1,Point p2) {
+		v[0]=(Point) p0.clone();
+		v[1]=(Point) p1.clone();
+		v[2]=(Point) p2.clone();
+		
+		//color = new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
+		color=color.RED;
+	}
 	public Triangle() {
 		v[0] = new Point();
 		v[1] = new Point();
@@ -19,7 +28,12 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		//color = new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
 		color=color.RED;
 	}
-
+	
+	// Sets a custom normal for this triangle which overrides the default calculated one
+	public void setNormal(Vector n) {
+		normal=(Vector) n.clone();
+	}
+	
 	public String toString() {
 		return "Triangle "+debug_name+": " + "V1(" + v[0].x + "," + v[0].y + "," + v[0].z + ")" + "V2(" + v[1].x + "," + v[1].y + ","
 				+ v[1].z + ")" + "V3(" + v[2].x + "," + v[2].y + "," + v[2].z + ")";
@@ -253,6 +267,8 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 	}
 
 	public Vector getNormal() {
+		if(normal!=null) return (Vector) normal.clone();
+		
 		Vector vec1 = new Vector();
 		Vector vec2 = new Vector();
 

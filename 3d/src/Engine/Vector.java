@@ -1,15 +1,21 @@
 package Engine;
 
 public class Vector extends Point implements Cloneable{
-	public double xAngle;
-	public double yAngle;
-	public double zAngle;
+	public double xAngle=0;
+	public double yAngle=0;
+	public double zAngle=0;
 	
 	public Vector() {
 		x=0;
 		y=0;
 		z=0;
 	}
+	public Vector(double vx,double vy,double vz) {
+		x=vx;
+		y=vy;
+		z=vz;
+	}
+	
 	public Vector(Point p) {
 		x=p.x;
 		y=p.y;

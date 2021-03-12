@@ -75,7 +75,8 @@ public class Main {
 		//scene.read3DObject("axis.obj");
 		//scene.read3DObject("spaceship.obj");
 		//scene.read3DObject("mountains.obj");
-		scene.read3DObject("teapot.obj");
+		//scene.read3DObject("teapot.obj");
+		scene.read3DObject("angry_face.obj");
 		
 		while(true) {
 			keyboard.virtualHoldKey();
