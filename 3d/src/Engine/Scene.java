@@ -42,6 +42,7 @@ public class Scene {
 		camera.x = 0;
 		camera.y = 0;
 		camera.z = 0;
+		
 		z_near = 1;// w/2*Math.tan(Math.toRadians(Main.fov_angle/2));
 		w = 1000;
 		h = 500;

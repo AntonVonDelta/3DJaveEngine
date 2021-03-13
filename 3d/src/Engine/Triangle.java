@@ -359,7 +359,7 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 
 	// Get color for each vertex based on the custom normals
 	public Color getVertexColor(Scene scene,int vertex) {
-		Point light=v[vertex];//new Point(0,0,1);
+		Point light=new Point(0,0,1);
 		Vector light_vec=new Vector(light).normalize();
 		
 		// Load the normals
