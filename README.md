@@ -11,9 +11,11 @@ The math behind is very simple - without any matrix transformations. Just trigon
   - Right click to select the visible triangle
   - **New** Added light effects
   - **New** Added culling filter and improved speed
- 
+  - **New** Added shading. This can be disabled
 # Objects file format
-The objects to be rendered should be stored in `obj.txt` file.
+The engine supports vertexes, normals and faces defined in standard `.obj` files. Standard [here](https://www.cs.cmu.edu/~mbz/personal/graphics/obj.html).
+
+However other objects can be defined in `.txt` files, following another standard.
 The format is at it follows:
   - Any empty line is ignored
   - Any line starting with `/` is ignored
@@ -32,6 +34,7 @@ The format is at it follows:
 
 # Rendering Examples
 ![image](https://user-images.githubusercontent.com/25268629/110861669-24a79f80-82c7-11eb-9afe-5e96a2cdd8b6.png)
+![image](https://user-images.githubusercontent.com/25268629/111033327-68aab980-8419-11eb-86b5-32f26277f8da.png)
 ![image](https://user-images.githubusercontent.com/25268629/110945484-67f52300-8346-11eb-8f87-9533e4aa0f91.png)
 ![image](https://user-images.githubusercontent.com/25268629/110708865-fe6cfb80-8203-11eb-934c-27f13e22536c.png)
 ![image](https://user-images.githubusercontent.com/25268629/110204895-2532d700-7e7e-11eb-813d-b8256f4c9d78.png)
