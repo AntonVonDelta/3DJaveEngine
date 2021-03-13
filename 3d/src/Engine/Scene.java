@@ -1,7 +1,13 @@
 package Engine;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.LinearGradientPaint;
+import java.awt.Paint;
+import java.awt.RenderingHints;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -98,11 +104,40 @@ public class Scene {
 					g.fillArc((int) (projected.x), (int) (projected.y), 10, 10, 0, 360);
 				}
 			} else {
-				g.setColor(temp.getColor(this));
-				g.fillPolygon(
+				// Shading
+				Graphics2D g2=(Graphics2D)g;
+				Color v0=temp.getVertexColor(this,0);
+				Color v1=temp.getVertexColor(this, 1);
+				Color v2=temp.getVertexColor(this, 2);
+				
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g2.setPaint(new BarycentricGradientPaint(
+						new_persp.v[0].x, new_persp.v[0].y, 
+						new_persp.v[1].x, new_persp.v[1].y, 
+						new_persp.v[2].x, new_persp.v[2].y, 
+						v0, v1, v2));
+				
+				g2.fillPolygon(
+						new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
+						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
+				
+				
+				g.drawPolygon(
 						new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
 						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
 
+				
+				// Quick fix for white lines between triangles
+				g2.setStroke(new BasicStroke(3));
+				g2.drawLine( 
+						(int) (new_persp.v[0].x), (int) (new_persp.v[0].y), 
+						(int) (new_persp.v[1].x),(int)new_persp.v[1].y);
+				
+				// No Shading
+				//g.setColor(temp.getColor(this));
+				//g.fillPolygon(
+				//		new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
+				//		new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);				
 			}
 
 			if (DEBUG) {
@@ -198,7 +233,7 @@ public class Scene {
 				int mode = 0; // 0 - vertex mode; 1- triangle mode; 2 - normal
 				String[] pos = st.split(" ");
 
-				if (st.startsWith("/") || pos.length < 4)
+				if (st.startsWith("/") || st.startsWith("#") || pos.length < 4)
 					continue;
 
 				// Uknown mode
@@ -222,9 +257,13 @@ public class Scene {
 						continue;
 					} else if(mode==1){
 						// A triangle is being built
-						String v1=pos[1].split("/")[0];
-						String v2=pos[2].split("/")[0];
-						String v3=pos[3].split("/")[0];
+						String[] arg1=pos[1].split("/");
+						String[] arg2=pos[2].split("/");
+						String[] arg3=pos[3].split("/");
+						
+						String v1=arg1[0];
+						String v2=arg2[0];
+						String v3=arg3[0];
 						
 						int vertex1_index = Integer.parseInt(v1) - 1;
 						int vertex2_index = Integer.parseInt(v2) - 1;
@@ -234,12 +273,22 @@ public class Scene {
 						face.v[1] = (Point) vertexes.get(vertex2_index).clone();
 						face.v[2] = (Point) vertexes.get(vertex3_index).clone();
 
+						// Also a texture and normal are defined
+						if(arg1.length==3 && arg2.length==3 && arg3.length==3) {
+							int n1_index=Integer.parseInt(arg1[2])-1;
+							int n2_index=Integer.parseInt(arg2[2])-1;
+							int n3_index=Integer.parseInt(arg3[2])-1;
+							
+							face.setVertexNormals(new Vector[] {
+									normals.get(n1_index),normals.get(n2_index),normals.get(n3_index)
+									});
+						}
 					}else {
 						// A normal is being built
-						//double nx=Double.parseDouble(pos[1]);
-						//double ny=Double.parseDouble(pos[2]);
-						//double nz=Double.parseDouble(pos[3]);
-						//normals.add(new Vector(nx,ny,nz));
+						double nx=Double.parseDouble(pos[1]);
+						double ny=Double.parseDouble(pos[2]);
+						double nz=Double.parseDouble(pos[3]);
+						normals.add(new Vector(nx,ny,nz));
 						
 						continue;
 					}
@@ -637,7 +686,7 @@ public class Scene {
 	}
 
 
-	private static Triangle xRotate(Triangle triangle, double amount_angle) {
+	static Triangle xRotate(Triangle triangle, double amount_angle) {
 		if (amount_angle == 0)
 			return (Triangle) triangle.clone();
 
@@ -648,7 +697,7 @@ public class Scene {
 		}
 		return new_pos;
 	}
-	private static Point xRotate(Point point, double amount_angle) {
+	static Point xRotate(Point point, double amount_angle) {
 		if (amount_angle == 0)
 			return (Point) point.clone();
 
@@ -661,7 +710,7 @@ public class Scene {
 
 		return new_pos;
 	}
-	private static Triangle yRotate(Triangle triangle, double amount_angle) {
+	static Triangle yRotate(Triangle triangle, double amount_angle) {
 		if (amount_angle == 0)
 			return (Triangle) triangle.clone();
 
@@ -672,7 +721,7 @@ public class Scene {
 		}
 		return new_pos;
 	}
-	private static Point yRotate(Point point, double amount_angle) {
+	static Point yRotate(Point point, double amount_angle) {
 		if (amount_angle == 0)
 			return (Point) point.clone();
 
@@ -685,7 +734,7 @@ public class Scene {
 
 		return new_pos;
 	}
-	private static Triangle zRotate(Triangle triangle, double amount_angle) {
+	static Triangle zRotate(Triangle triangle, double amount_angle) {
 		if (amount_angle == 0)
 			return (Triangle) triangle.clone();
 
@@ -696,7 +745,7 @@ public class Scene {
 		}
 		return new_pos;
 	}
-	private static Point zRotate(Point point, double amount_angle) {
+	static Point zRotate(Point point, double amount_angle) {
 		if (amount_angle == 0)
 			return (Point) point.clone();
 
@@ -820,10 +869,11 @@ public class Scene {
 
 		return translated;
 	}
+	
+	
+	
 	// Apllies the camera rotation and translation to the object given in world
 	// coordinates
-	
-	
 	private Point applyCameraTransformation(Point p) {
 		Point translated = new Point();
 		translated.x = p.x - camera.x;
@@ -848,12 +898,32 @@ public class Scene {
 	}
 	// Apllies the camera rotation and translation to the object given in world
 	// coordinates
+	// For vectors there is no translation. Only rotation
+	private Vector applyCameraTransformation(Vector v) {
+		Vector temp = (Vector) v.clone();
+				
+		// The rotation order counts!
+		temp = new Vector(yRotate(temp, -camera.yAngle));
+		temp = new Vector(xRotate(temp, -camera.xAngle));
+		temp = new Vector(zRotate(temp, -camera.zAngle));
+
+		return temp;
+	}
+	// Apllies the camera rotation and translation to the object given in world
+	// coordinates
 	private Triangle applyCameraTransformation(Triangle t) {
 		Triangle translated = (Triangle) t.clone();
 		translated.v[0] = applyCameraTransformation(t.v[0]);
 		translated.v[1] = applyCameraTransformation(t.v[1]);
 		translated.v[2] = applyCameraTransformation(t.v[2]);
 
+		// Also rotate normals
+		Vector[] n=translated.getVertexNormals();
+		if(n!=null) {
+			n[0] = applyCameraTransformation(n[0]);
+			n[1] = applyCameraTransformation(n[1]);
+			n[2] = applyCameraTransformation(n[2]);
+		}
 		return translated;
 	}
 

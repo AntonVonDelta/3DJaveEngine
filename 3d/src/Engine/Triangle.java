@@ -6,11 +6,12 @@ import java.util.List;
 
 public class Triangle implements Cloneable, Comparable<Triangle> {
 	public Point v[] = new Point[3];
+	private Vector n[] = null;	// Vertex normals	
 	public Color color = Color.DARK_GRAY;
 	public boolean highlight = false;	// Used when right clicking a visible triangle
 	public String debug_name = "";
 	private double points_per_area = 4 / 2; // Controls the resolution for scanning points on large triangles
-	private Vector normal=null;
+
 	
 	public Triangle(Point p0,Point p1,Point p2) {
 		v[0]=(Point) p0.clone();
@@ -30,8 +31,14 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 	}
 	
 	// Sets a custom normal for this triangle which overrides the default calculated one
-	public void setNormal(Vector n) {
-		normal=(Vector) n.clone();
+	public void setVertexNormals(Vector[] normals) {
+		n=new Vector[3];
+		n[0]=(Vector) normals[0].clone();
+		n[1]=(Vector) normals[1].clone();
+		n[2]=(Vector) normals[2].clone();
+	}
+	public Vector[] getVertexNormals() {
+		return n;
 	}
 	
 	public String toString() {
@@ -44,6 +51,15 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		temp.v[0] = (Point) v[0].clone();
 		temp.v[1] = (Point) v[1].clone();
 		temp.v[2] = (Point) v[2].clone();
+		
+		if(n!=null) {
+			temp.n=new Vector[3];
+			temp.n[0]=(Vector) n[0].clone();
+			temp.n[1]=(Vector) n[1].clone();
+			temp.n[2]=(Vector) n[2].clone();	
+		}
+
+		
 		temp.color = color;
 		temp.highlight = highlight;
 		temp.debug_name = debug_name;
@@ -266,9 +282,7 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 
 	}
 
-	public Vector getNormal() {
-		if(normal!=null) return (Vector) normal.clone();
-		
+	public Vector getNormal() {		
 		Vector vec1 = new Vector();
 		Vector vec2 = new Vector();
 
@@ -321,11 +335,10 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		return cross1.dot(cross2) >= 0;
 	}
 
-	// Get the color depending on the normal
+	// Get the color depending on the general triangle normal
 	public Color getColor(Scene scene) {
 		Point light=new Point(0,0,1);	//getCenter(); // Using the center will produce uneven light effects
 		Vector light_vec=new Vector(light).normalize();
-		double max_light_distance=10;	// Maximum distance the light will work over
 		
 		Vector normal=getNormal();
 		double luminosity=normal.dot(light_vec);
@@ -333,7 +346,7 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		// This triangle should not be visible. Give a small backlight
 		if(luminosity>0) luminosity=0.1;
 		
-		double min_luminosity=0.1;
+		double min_luminosity=0.0;
 		luminosity=min_luminosity+Math.abs(luminosity);	//min_luminosity+Math.abs(luminosity)*(1-min_luminosity);	// With this formula the maximum luminosity will be the original color which may not be ligthen enough
 		
 		
@@ -343,6 +356,32 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		
 		return new Color(r,g,b);
 	}
+
+	// Get color for each vertex based on the custom normals
+	public Color getVertexColor(Scene scene,int vertex) {
+		Point light=v[vertex];//new Point(0,0,1);
+		Vector light_vec=new Vector(light).normalize();
+		
+		// Load the normals
+		Vector normal=getNormal();
+		if(n!=null) normal=n[vertex];
+		
+		double luminosity=normal.dot(light_vec);
+		
+		// This triangle should not be visible. Give a small backlight
+		if(luminosity>0) luminosity=0.1;
+		
+		double min_luminosity=0.0;
+		luminosity=min_luminosity+Math.abs(luminosity);	//min_luminosity+Math.abs(luminosity)*(1-min_luminosity);	// With this formula the maximum luminosity will be the original color which may not be ligthen enough
+		
+		
+		int r=(int)Math.min(255, color.getRed()*luminosity);
+		int g=(int)Math.min(255, color.getGreen()*luminosity);
+		int b=(int)Math.min(255, color.getBlue()*luminosity);
+		
+		return new Color(r,g,b);
+	}
+	
 	private static boolean doubleEq(double a, double b) {
 		double error = 0.000001;
 		return Math.abs(a - b) <= error;
