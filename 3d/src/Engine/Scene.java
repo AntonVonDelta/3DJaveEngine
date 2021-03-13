@@ -76,7 +76,7 @@ public class Scene {
 			Collections.sort(depth_sorted);	// Not good because a value of zero does not means objects have the rendering priority
 			//depth_sorted=orderByZDepth(depth_sorted);	// CPU heavy when too many pixels/triangles
 			//depth_sorted = looseySort(depth_sorted);		// The best so far
-
+			
 			cache_sorted_triangles=true;
 		}
 
@@ -84,6 +84,7 @@ public class Scene {
 		Graphics2D g2=(Graphics2D)g;
 		g2.setStroke(new BasicStroke(3));
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 		
 		// Draw the triangles
 		for (Triangle temp : depth_sorted) {
@@ -386,7 +387,6 @@ public class Scene {
 			temp1.v[2] = intersect2;
 		}
 
-
 		return new Triangle[] { temp1 };
 	}
 
@@ -479,6 +479,7 @@ public class Scene {
 	// returns 0 or equality
 	// Better approach than default sort which will arrange those elements on the
 	// same level
+	// O(n^2) terrible but accurate
 	private List<Triangle> looseySort(List<Triangle> list) {
 		if (list.size()==0 || list.size() == 1)
 			return list;
@@ -511,6 +512,7 @@ public class Scene {
 	// rasterization and drawing
 	// This is an improved Painter's algorithm
 	// List must be camera relative triangles and clipped
+	// O(w*h*n) somehow good but not that accurate
 	private List<Triangle> orderByZDepth(List<Triangle> list) {
 		Graph<Triangle> dependency_graph = new Graph<Triangle>();
 		Set<Triangle> unprocessed_triangles = new HashSet<Triangle>();
@@ -576,6 +578,7 @@ public class Scene {
 		return dependency_graph.topologicalSort();
 	}
 
+	
 	
 	// Highlights clicked triangle
 	// visible_triangle selects the triangle that is actually drawn on screen (which

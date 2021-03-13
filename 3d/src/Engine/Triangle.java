@@ -81,9 +81,8 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 
 		// This return condition is not complete
 		// The triangles may still very well intersect but the intersection may not contain the sampling points (like the center and the vertexes)
-		if(order==0) return 0;
-		
-		return Integer.signum(order);
+		// So a value of zero does not mean the triangles are not intersecting
+		return order;
 	}
 
 	// Extended compare routine with 2d intersection of the projected triangles
