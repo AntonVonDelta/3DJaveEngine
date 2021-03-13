@@ -80,7 +80,11 @@ public class Scene {
 			cache_sorted_triangles=true;
 		}
 
-
+		// Prepare graphics
+		Graphics2D g2=(Graphics2D)g;
+		g2.setStroke(new BasicStroke(3));
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		
 		// Draw the triangles
 		for (Triangle temp : depth_sorted) {
 			Triangle new_persp = new Triangle();
@@ -106,12 +110,11 @@ public class Scene {
 				}
 			} else {
 				// Shading
-				Graphics2D g2=(Graphics2D)g;
+				
 				Color v0=temp.getVertexColor(this,0);
 				Color v1=temp.getVertexColor(this, 1);
 				Color v2=temp.getVertexColor(this, 2);
 				
-				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				g2.setPaint(new BarycentricGradientPaint(
 						new_persp.v[0].x, new_persp.v[0].y, 
 						new_persp.v[1].x, new_persp.v[1].y, 
@@ -122,17 +125,11 @@ public class Scene {
 						new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
 						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
 				
-				
+				// Fix for white lines between triangles - perhaps caused by BarycentricGradientPaint imprecision
 				g.drawPolygon(
 						new int[] { (int) (new_persp.v[0].x), (int) (new_persp.v[1].x), (int) (new_persp.v[2].x) },
 						new int[] { (int) (new_persp.v[0].y), (int) (new_persp.v[1].y), (int) (new_persp.v[2].y) }, 3);
 
-				
-				// Quick fix for white lines between triangles
-				g2.setStroke(new BasicStroke(3));
-				g2.drawLine( 
-						(int) (new_persp.v[0].x), (int) (new_persp.v[0].y), 
-						(int) (new_persp.v[1].x),(int)new_persp.v[1].y);
 				
 				// No Shading
 				//g.setColor(temp.getColor(this));

@@ -159,7 +159,7 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 				double intersect_dist = Math.sqrt(intersection.x * intersection.x + intersection.y * intersection.y
 						+ intersection.z * intersection.z);
 				if (!doubleEq(dist - intersect_dist, 0))
-					order += -Double.compare(dist, intersect_dist);
+					return -Double.compare(dist, intersect_dist);
 			}
 		}
 
@@ -172,13 +172,12 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 				double intersect_dist = Math.sqrt(intersection.x * intersection.x + intersection.y * intersection.y
 						+ intersection.z * intersection.z);
 				if (!doubleEq(dist - intersect_dist, 0))
-					order += -Double.compare(intersect_dist, dist);
+					return -Double.compare(intersect_dist, dist);
 			}
 		}
 		
 		// If order is 0 the triangles may still very well intersect but the intersection may not contain the sampling points (like the center and the vertexes)
-		
-		return Integer.signum(order);
+		return 0;
 	}
 	
 	public List<Point> getEquidistantPoints() {
@@ -346,7 +345,7 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		// This triangle should not be visible. Give a small backlight
 		if(luminosity>0) luminosity=0.1;
 		
-		double min_luminosity=0.0;
+		double min_luminosity=0.1;
 		luminosity=min_luminosity+Math.abs(luminosity);	//min_luminosity+Math.abs(luminosity)*(1-min_luminosity);	// With this formula the maximum luminosity will be the original color which may not be ligthen enough
 		
 		
@@ -359,7 +358,9 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 
 	// Get color for each vertex based on the custom normals
 	public Color getVertexColor(Scene scene,int vertex) {
-		Point light=new Point(0,0,1);
+		// Here we use v[vertex] if we want perspective-affected ligthing
+		// or new Point() if the light should be infinite far away
+		Point light=v[vertex];//new Point(0,0,1);
 		Vector light_vec=new Vector(light).normalize();
 		
 		// Load the normals
@@ -371,7 +372,7 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		// This triangle should not be visible. Give a small backlight
 		if(luminosity>0) luminosity=0.1;
 		
-		double min_luminosity=0.0;
+		double min_luminosity=0.2;
 		luminosity=min_luminosity+Math.abs(luminosity);	//min_luminosity+Math.abs(luminosity)*(1-min_luminosity);	// With this formula the maximum luminosity will be the original color which may not be ligthen enough
 		
 		
