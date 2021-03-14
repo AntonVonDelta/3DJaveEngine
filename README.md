@@ -11,7 +11,7 @@ The math behind is very simple - without any matrix transformations. Just trigon
   - Right click to select the visible triangle
   - **New** Added light effects
   - **New** Added culling filter and improved speed
-  - **New** Added shading. This can be disabled
+  - **New** Added shading. This can be disabled. Now shading works on clipped triangles as well
 # Objects file format
 The engine supports vertexes, normals and faces defined in standard `.obj` files. Standard [here](https://www.cs.cmu.edu/~mbz/personal/graphics/obj.html).
 
