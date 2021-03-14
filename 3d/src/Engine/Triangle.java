@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Triangle implements Cloneable, Comparable<Triangle> {
 	public Point v[] = new Point[3];
-	private Vector n[] = null;	// Vertex normals	
+	private Vector n[];	// Vertex normals	
 	public Color color = Color.DARK_GRAY;
 	public boolean highlight = false;	// Used when right clicking a visible triangle
 	public String debug_name = "";
@@ -22,12 +22,12 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		color=color.RED;
 	}
 	public Triangle() {
-		v[0] = new Point();
-		v[1] = new Point();
-		v[2] = new Point();
-
-		//color = new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
-		color=color.RED;
+		this(new Point(),new Point(),new Point());
+	}
+	
+	public void setVertexNormals(int index,Vector normal) {
+		if(n==null)	n=new Vector[] {getNormal(),getNormal(),getNormal()};
+		n[index]=(Vector) normal.clone();
 	}
 	
 	// Sets a custom normal for this triangle which overrides the default calculated one
@@ -38,8 +38,13 @@ public class Triangle implements Cloneable, Comparable<Triangle> {
 		n[2]=(Vector) normals[2].clone();
 	}
 	public Vector[] getVertexNormals() {
+		if(n==null) {
+			return new Vector[] {getNormal(),getNormal(),getNormal()};
+		}
 		return n;
 	}
+	
+	
 	
 	public String toString() {
 		return "Triangle "+debug_name+": " + "V1(" + v[0].x + "," + v[0].y + "," + v[0].z + ")" + "V2(" + v[1].x + "," + v[1].y + ","

@@ -318,6 +318,9 @@ public class Scene {
 	private Triangle[] clipTriangle(Triangle triangle) {
 		List<Point> visible_points = new ArrayList<Point>();
 		List<Point> hidden_points = new ArrayList<Point>();
+		List<Vector> visible_normals=new ArrayList<Vector>();
+		List<Vector> hidden_normals=new ArrayList<Vector>();
+		
 		int orientation_hint=0;	// Used to reconstruct the new triangles while preserving the orientation
 		
 		//triangle = applyCameraTransformation(triangle);
@@ -326,9 +329,11 @@ public class Scene {
 			Point p=triangle.v[i];
 			if (isInBack(p)) {
 				hidden_points.add(p);
+				hidden_normals.add(triangle.getVertexNormals()[i]);
 			} else {
 				orientation_hint+=i;
 				visible_points.add(p);
+				visible_normals.add(triangle.getVertexNormals()[i]);
 			}
 		}
 
@@ -347,22 +352,49 @@ public class Scene {
 			Point intersect1 = clipLine(visible_points.get(0), hidden_points.get(0));
 			Point intersect2 = clipLine(visible_points.get(1), hidden_points.get(0));
 			
+			// Interpolate new normals for the intersections
+			double ratio1=visible_points.get(0).to(intersect1).getLength()/visible_points.get(0).to(hidden_points.get(0)).getLength();
+			double ratio2=visible_points.get(1).to(intersect2).getLength()/visible_points.get(1).to(hidden_points.get(0)).getLength();
+			Vector normal1=new Vector(visible_normals.get(0));
+			Vector normal2=new Vector(visible_normals.get(1));
+			
+			normal1.x+=(hidden_normals.get(0).x-visible_normals.get(0).x)*ratio1;
+			normal1.y+=(hidden_normals.get(0).y-visible_normals.get(0).y)*ratio1;
+			normal1.z+=(hidden_normals.get(0).z-visible_normals.get(0).z)*ratio1;
+			
+			normal2.x+=(hidden_normals.get(0).x-visible_normals.get(1).x)*ratio2;
+			normal2.y+=(hidden_normals.get(0).y-visible_normals.get(1).y)*ratio2;
+			normal2.z+=(hidden_normals.get(0).z-visible_normals.get(1).z)*ratio2;
+			
+			// Create new triangle from intersected points
 			if(orientation_hint%2==0) {
 				temp1.v[0] = visible_points.get(0);
 				temp1.v[1] = intersect1;
 				temp1.v[2] = visible_points.get(1);
-
+				temp1.setVertexNormals(0, visible_normals.get(0));
+				temp1.setVertexNormals(1, normal1);
+				temp1.setVertexNormals(2, visible_normals.get(1));
+				
 				temp2.v[0] = visible_points.get(1);
 				temp2.v[1] = intersect1;
 				temp2.v[2] = intersect2;
+				temp2.setVertexNormals(0, visible_normals.get(1));
+				temp2.setVertexNormals(1, normal1);
+				temp2.setVertexNormals(2, normal2);
 			}else {
 				temp1.v[0] = visible_points.get(0);
 				temp1.v[1] = visible_points.get(1);
 				temp1.v[2] = intersect1;
-
+				temp1.setVertexNormals(0, visible_normals.get(0));
+				temp1.setVertexNormals(1, visible_normals.get(1));
+				temp1.setVertexNormals(2, normal1);
+				
 				temp2.v[0] = visible_points.get(1);
 				temp2.v[1] = intersect2;
 				temp2.v[2] = intersect1;
+				temp2.setVertexNormals(0, visible_normals.get(1));
+				temp2.setVertexNormals(1, normal2);
+				temp2.setVertexNormals(2, normal1);
 			}
 
 
@@ -377,14 +409,34 @@ public class Scene {
 		Point intersect1 = clipLine(visible_points.get(0), hidden_points.get(0));
 		Point intersect2 = clipLine(visible_points.get(0), hidden_points.get(1));
 
+		// Interpolate new normals for the intersections
+		double ratio1=visible_points.get(0).to(intersect1).getLength()/visible_points.get(0).to(hidden_points.get(0)).getLength();
+		double ratio2=visible_points.get(0).to(intersect2).getLength()/visible_points.get(0).to(hidden_points.get(1)).getLength();
+		Vector normal1=new Vector(visible_normals.get(0));
+		Vector normal2=new Vector(visible_normals.get(0));
+		
+		normal1.x+=(hidden_normals.get(0).x-visible_normals.get(0).x)*ratio1;
+		normal1.y+=(hidden_normals.get(0).y-visible_normals.get(0).y)*ratio1;
+		normal1.z+=(hidden_normals.get(0).z-visible_normals.get(0).z)*ratio1;
+		
+		normal2.x+=(hidden_normals.get(1).x-visible_normals.get(0).x)*ratio2;
+		normal2.y+=(hidden_normals.get(1).y-visible_normals.get(0).y)*ratio2;
+		normal2.z+=(hidden_normals.get(1).z-visible_normals.get(0).z)*ratio2;
+		
 		if(orientation_hint%2==0) {
 			temp1.v[0] = visible_points.get(0);
 			temp1.v[1] = intersect1;
 			temp1.v[2] = intersect2;
+			temp1.setVertexNormals(0, visible_normals.get(0));
+			temp1.setVertexNormals(1, normal1);
+			temp1.setVertexNormals(2, normal2);
 		}else {
 			temp1.v[0] = intersect1;
 			temp1.v[1] = visible_points.get(0);
 			temp1.v[2] = intersect2;
+			temp1.setVertexNormals(0, normal1);
+			temp1.setVertexNormals(1, visible_normals.get(0));
+			temp1.setVertexNormals(2, normal2);
 		}
 
 		return new Triangle[] { temp1 };
